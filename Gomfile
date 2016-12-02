@@ -1,0 +1,15 @@
+gom 'github.com/justinas/alice'
+gom 'github.com/neustar/httprouter'
+gom 'github.com/rs/xlog'
+gom 'github.com/trong/xlog-sentry'
+gom 'github.com/BurntSushi/toml'
+gom 'github.com/vattle/sqlboiler'
+gom 'github.com/getsentry/raven-go'
+gom 'github.com/pkg/errors'
+
+group :development do
+    gom 'github.com/achiku/wbs'
+    gom 'github.com/achiku/pgtxdb'
+    gom 'github.com/achiku/mergo'
+    gom 'github.com/achiku/dgw'
+end

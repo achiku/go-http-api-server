@@ -1,0 +1,12 @@
+root_path = "."
+
+watch_target_dirs = ["./"]
+watch_exclude_dirs = [".git", "vendor", "bin"]
+watch_file_ext = [".go"]
+
+build_target_dir = "./bin"
+build_target_name = "server"
+build_command = "go"
+build_options = ["build", "-v"]
+
+restart_process = true

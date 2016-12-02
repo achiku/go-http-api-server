@@ -58,7 +58,9 @@ func main() {
 	app := App{Name: "my-service"}
 	r := httprouter.New()
 	// r.GET("/hello", c.Then(InternalHandler{h: app.hello}))
-	r.GET("/hello", http.HandlerFunc(app.hello))
+	// r.GET("/hello", http.HandlerFunc(c.Then(InternalHandler{h: app.hello})))
+	h := c.Then(InternalHandler{h: app.hello})
+	r.GET("/hello", http.HandlerFunc(h.ServeHTTP))
 
 	xlog.Info("xlog")
 	xlog.Infof("chain: %+v", c)

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/dimfeld/httptreemux"
 	"github.com/justinas/alice"
-	"github.com/neustar/httprouter"
 	"github.com/rs/xlog"
 )
 
@@ -15,6 +15,8 @@ import (
 type App struct {
 	Name string
 }
+
+func NewIHandler(h http.HandlerFunc) InternalHandler {}
 
 // InternalHandler internal
 type InternalHandler struct {
@@ -56,7 +58,8 @@ func main() {
 		accessLoggingMiddleware,
 	)
 	app := App{Name: "my-service"}
-	r := httprouter.New()
+	router := httptreemux.New()
+	r := router.NewGroup("/api").UsingContext()
 	// r.GET("/hello", c.Then(InternalHandler{h: app.hello}))
 	// r.GET("/hello", http.HandlerFunc(c.Then(InternalHandler{h: app.hello})))
 	h := c.Then(InternalHandler{h: app.hello})
@@ -65,7 +68,7 @@ func main() {
 	xlog.Info("xlog")
 	xlog.Infof("chain: %+v", c)
 	log.Println("start server")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)
 	}
 }

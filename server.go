@@ -16,8 +16,6 @@ type App struct {
 	Name string
 }
 
-func NewIHandler(h http.HandlerFunc) InternalHandler {}
-
 // InternalHandler internal
 type InternalHandler struct {
 	h func(w http.ResponseWriter, r *http.Request)
@@ -36,6 +34,10 @@ func (app *App) hello(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "hello")
 	return
+}
+
+func f(h http.Handler) http.HandlerFunc {
+	return http.HandlerFunc(h.ServeHTTP)
 }
 
 func main() {
@@ -62,8 +64,10 @@ func main() {
 	r := router.NewGroup("/api").UsingContext()
 	// r.GET("/hello", c.Then(InternalHandler{h: app.hello}))
 	// r.GET("/hello", http.HandlerFunc(c.Then(InternalHandler{h: app.hello})))
-	h := c.Then(InternalHandler{h: app.hello})
-	r.GET("/hello", http.HandlerFunc(h.ServeHTTP))
+	// h := c.Then(InternalHandler{h: app.hello})
+	// r.GET("/hello", http.HandlerFunc(h.ServeHTTP))
+	// r.GET("/hello", f(c.Then(InternalHandler{h: app.hello})))
+	r.GET("/hello", c.Then(InternalHandler{h: app.hello}).ServeHTTP)
 
 	xlog.Info("xlog")
 	xlog.Infof("chain: %+v", c)

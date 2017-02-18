@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/dimfeld/httptreemux"
+	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/rs/xlog"
 )
@@ -28,11 +28,21 @@ func (ih InternalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) hello(w http.ResponseWriter, r *http.Request) {
-	l := xlog.FromRequest(r)
-	l.Info("hello handler")
+	logger := xlog.FromRequest(r)
+	logger.Info("hello handler")
 	log.Println("this is usual logger")
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "hello")
+	return
+}
+
+func (app *App) helloWithName(w http.ResponseWriter, r *http.Request) {
+	logger := xlog.FromRequest(r)
+	logger.Info("hello handler")
+	log.Println("this is usual logger")
+	val := mux.Vars(r)
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "hello, %s", val["name"])
 	return
 }
 
@@ -60,14 +70,22 @@ func main() {
 		accessLoggingMiddleware,
 	)
 	app := App{Name: "my-service"}
-	router := httptreemux.New()
-	r := router.NewGroup("/api").UsingContext()
+	// for httptreemux
+	// router := httptreemux.New()
+	// r := router.NewGroup("/api").UsingContext()
 	// r.GET("/hello", c.Then(InternalHandler{h: app.hello}))
 	// r.GET("/hello", http.HandlerFunc(c.Then(InternalHandler{h: app.hello})))
 	// h := c.Then(InternalHandler{h: app.hello})
 	// r.GET("/hello", http.HandlerFunc(h.ServeHTTP))
 	// r.GET("/hello", f(c.Then(InternalHandler{h: app.hello})))
-	r.GET("/hello", c.Then(InternalHandler{h: app.hello}).ServeHTTP)
+	// r.GET("/hello", c.Then(InternalHandler{h: app.hello}).ServeHTTP)
+
+	// for gorilla/mux
+	router := mux.NewRouter()
+	r := router.PathPrefix("/api").Subrouter()
+	r.Methods("GET").Path("/hello").Handler(c.Then(InternalHandler{h: app.hello}))
+	r.Methods("GET").Path("/hello/staticName").Handler(c.Then(InternalHandler{h: app.hello}))
+	r.Methods("GET").Path("/hello/{name}").Handler(c.Then(InternalHandler{h: app.helloWithName}))
 
 	xlog.Info("xlog")
 	xlog.Infof("chain: %+v", c)

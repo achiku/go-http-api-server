@@ -7,6 +7,7 @@ gom 'github.com/vattle/sqlboiler'
 gom 'github.com/getsentry/raven-go'
 gom 'github.com/pkg/errors'
 gom 'github.com/dimfeld/httptreemux'
+gom 'github.com/gorilla/mux'
 
 group :development do
     gom 'github.com/achiku/wbs'

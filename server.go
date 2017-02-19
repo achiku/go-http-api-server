@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
+	"github.com/pkg/errors"
 	"github.com/rs/xlog"
 )
 
@@ -18,41 +19,51 @@ type App struct {
 
 // InternalHandler internal
 type InternalHandler struct {
-	h func(w http.ResponseWriter, r *http.Request)
+	h func(w http.ResponseWriter, r *http.Request) (int, interface{}, error)
 }
 
 // ServeHTTP serve
 func (ih InternalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ih.h(w, r)
+	logger := xlog.FromRequest(r)
+	encoder := json.NewEncoder(w)
+	reqInfo := xlog.F{"http_request": r}
+
+	statusCode, res, err := ih.h(w, r)
+	if err != nil {
+		logger.Error(err, reqInfo)
+		w.WriteHeader(statusCode)
+		encoder.Encode(res)
+		return
+	}
+	w.WriteHeader(statusCode)
+	encoder.Encode(res)
 	return
 }
 
-func (app *App) hello(w http.ResponseWriter, r *http.Request) {
+func (app *App) hello(w http.ResponseWriter, r *http.Request) (int, interface{}, error) {
 	logger := xlog.FromRequest(r)
 	logger.Info("hello handler")
-	log.Println("this is usual logger")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "hello")
-	return
+	res, err := HelloService(r.Context(), "")
+	if err != nil {
+		return http.StatusInternalServerError, nil, errors.Wrap(err, "HelloService failed")
+	}
+	return http.StatusOK, res, nil
 }
 
-func (app *App) helloWithName(w http.ResponseWriter, r *http.Request) {
+func (app *App) helloWithName(w http.ResponseWriter, r *http.Request) (int, interface{}, error) {
 	logger := xlog.FromRequest(r)
-	logger.Info("hello handler")
-	log.Println("this is usual logger")
+	logger.Info("hello wth name handler")
 	val := mux.Vars(r)
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "hello, %s", val["name"])
-	return
-}
-
-func f(h http.Handler) http.HandlerFunc {
-	return http.HandlerFunc(h.ServeHTTP)
+	res, err := HelloService(r.Context(), val["name"])
+	if err != nil {
+		return http.StatusInternalServerError, nil, errors.Wrap(err, "HelloService failed")
+	}
+	return http.StatusOK, res, nil
 }
 
 func main() {
 	host, _ := os.Hostname()
-	conf := xlog.Config{
+	logConf := xlog.Config{
 		Fields: xlog.F{
 			"role": "my-service",
 			"host": host,
@@ -61,7 +72,7 @@ func main() {
 	}
 
 	c := alice.New(
-		xlog.NewHandler(conf),
+		xlog.NewHandler(logConf),
 		xlog.MethodHandler("method"),
 		xlog.URLHandler("url"),
 		xlog.UserAgentHandler("user_agent"),
@@ -70,15 +81,6 @@ func main() {
 		accessLoggingMiddleware,
 	)
 	app := App{Name: "my-service"}
-	// for httptreemux
-	// router := httptreemux.New()
-	// r := router.NewGroup("/api").UsingContext()
-	// r.GET("/hello", c.Then(InternalHandler{h: app.hello}))
-	// r.GET("/hello", http.HandlerFunc(c.Then(InternalHandler{h: app.hello})))
-	// h := c.Then(InternalHandler{h: app.hello})
-	// r.GET("/hello", http.HandlerFunc(h.ServeHTTP))
-	// r.GET("/hello", f(c.Then(InternalHandler{h: app.hello})))
-	// r.GET("/hello", c.Then(InternalHandler{h: app.hello}).ServeHTTP)
 
 	// for gorilla/mux
 	router := mux.NewRouter()
@@ -87,9 +89,7 @@ func main() {
 	r.Methods("GET").Path("/hello/staticName").Handler(c.Then(InternalHandler{h: app.hello}))
 	r.Methods("GET").Path("/hello/{name}").Handler(c.Then(InternalHandler{h: app.helloWithName}))
 
-	xlog.Info("xlog")
-	xlog.Infof("chain: %+v", c)
-	log.Println("start server")
+	xlog.Info("start server")
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)
 	}

@@ -13,7 +13,6 @@ func accessLoggingMiddleware(next http.Handler) http.Handler {
 		t1 := time.Now()
 		next.ServeHTTP(w, r)
 		t2 := time.Now()
-		// TODO: HTTP Status Codeも出力したい
 		logger.Infof(
 			"access-log",
 			xlog.F{

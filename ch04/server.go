@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
 )
 
 // Greeting greeting
@@ -92,19 +93,19 @@ func main() {
 		Logger: log.New(os.Stdout, fmt.Sprintf("[host=%s] ", host), log.LstdFlags),
 	}
 	// middleware chain
-	// chain := alice.New(
-	// 	loggingMiddleware,
-	// 	appLoggingMiddleware(app.Logger),
-	// )
+	chain := alice.New(
+		recoverMiddleware,
+		appLoggingMiddleware(app.Logger),
+	)
+	publicChain := chain.Append(
+		publicMiddleware,
+	)
 	// for gorilla/mux
 	router := mux.NewRouter()
 	r := router.PathPrefix("/api").Subrouter()
-	r.Methods("GET").Path("/hello").Handler(
-		loggingMiddleware(AppHandler{h: app.Greeting}))
-	r.Methods("GET").Path("/hello/staticName").Handler(
-		loggingMiddleware(AppHandler{h: app.Greeting}))
-	r.Methods("GET").Path("/hello/{name}").Handler(
-		loggingMiddleware(AppHandler{h: app.GreetingWithName}))
+	r.Methods("GET").Path("/hello").Handler(chain.Then(AppHandler{h: app.Greeting}))
+	r.Methods("GET").Path("/hello/staticName").Handler(publicChain.Then(AppHandler{h: app.Greeting}))
+	r.Methods("GET").Path("/hello/{name}").Handler(chain.Then(AppHandler{h: app.GreetingWithName}))
 
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)

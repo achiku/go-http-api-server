@@ -29,6 +29,16 @@ func (d dog) name() string {
 	return d.Name
 }
 
+type nameTyp string
+
+func (s nameTyp) name() string {
+	return string(s)
+}
+
+func (s nameTyp) greeting() string {
+	return fmt.Sprintf("nameType: %s", s)
+}
+
 type animal interface {
 	greeting() string
 	name() string
@@ -48,7 +58,8 @@ func main() {
 		Age:   2,
 		Owner: "moqada",
 	}
-	for _, a := range []animal{p1, p2, d1} {
+	n1 := nameTyp("8maki")
+	for _, a := range []animal{p1, p2, d1, n1} {
 		fmt.Printf("%s: %s\n", a.name(), a.greeting())
 	}
 }

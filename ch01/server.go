@@ -70,10 +70,12 @@ func (app *App) Greeting(w http.ResponseWriter, r *http.Request) {
 			Code:    http.StatusInternalServerError,
 			Message: "something went wrong",
 		})
+		return
 	}
 	app.Logger.Printf("ok: %v", res)
 	w.WriteHeader(http.StatusOK)
 	encoder.Encode(res)
+	return
 }
 
 // GreetingWithName greeting with name
@@ -88,10 +90,12 @@ func (app *App) GreetingWithName(w http.ResponseWriter, r *http.Request) {
 			Code:    http.StatusInternalServerError,
 			Message: "something went wrong",
 		})
+		return
 	}
 	app.Logger.Printf("ok: %v", res)
 	w.WriteHeader(http.StatusOK)
 	encoder.Encode(res)
+	return
 }
 
 // App application

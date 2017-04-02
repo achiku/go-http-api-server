@@ -1,0 +1,18 @@
+root_path = "."
+
+watch_target_dirs = ["."]
+watch_exclude_dirs = [".git", "vendor", "bin"]
+watch_file_ext = [".go"]
+
+build_target_dir = "bin"
+build_target_name = "ch03-server"
+build_command = "go"
+build_options = ["build", "-v"]
+
+# command will be  `build_target_dir/build_target_name start_options`
+# in this case bin/myserver -v
+# start_options = ["-v"]
+
+# default true, but it's possible to make this fale, when
+# running a program that doesn't persist as a process
+restart_process = true

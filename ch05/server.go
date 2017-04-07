@@ -98,6 +98,8 @@ func (app *App) Hello(ctx echo.Context) error {
 		Time: t,
 	}
 	app.Logger.Printf("sending back message: %v", msg)
+	l := ctx.Logger()
+	l.Debugf("this is echo logger: %v", msg)
 	ctx.JSON(http.StatusOK, msg)
 	return nil
 }
@@ -122,6 +124,10 @@ func main() {
 	}
 	// Route => handler
 	e.GET("/hello", app.Hello)
+	e.GET("/logger", func(ctx echo.Context) error {
+		ctx.Logger().Debug("no log")
+		return nil
+	})
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))

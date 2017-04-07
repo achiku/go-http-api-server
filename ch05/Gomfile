@@ -1,0 +1,6 @@
+gom 'github.com/labstack/echo', :tag => 'v3.0.3'
+gom 'github.com/lib/pq'
+
+group :development do
+    gom 'github.com/achiku/wbs'
+end

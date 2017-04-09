@@ -1,0 +1,5 @@
+gom 'github.com/rs/xlog'
+
+group :development do
+    gom 'github.com/achiku/wbs'
+end

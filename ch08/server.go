@@ -122,10 +122,19 @@ func main() {
 		xlog.RequestIDHandler("req_id", "Request-Id"),
 		loggingMiddleware,
 	)
+	halfLogChain := chain.Append(
+		xlog.NewHandler(NewLogConfig(app.Config)),
+		loggingMiddleware,
+	)
+	noLogChain := chain.Append(
+		loggingMiddleware,
+	)
 	// for gorilla/mux
 	router := mux.NewRouter()
 	r := router.PathPrefix("/api").Subrouter()
 	r.Methods("GET").Path("/hello").Handler(apiChain.Then(AppHandler{h: app.Greeting}))
+	r.Methods("GET").Path("/hello/nolog").Handler(noLogChain.Then(AppHandler{h: app.Greeting}))
+	r.Methods("GET").Path("/hello/halflog").Handler(halfLogChain.Then(AppHandler{h: app.Greeting}))
 	r.Methods("GET").Path("/hello/staticName").Handler(apiChain.Then(AppHandler{h: app.Greeting}))
 	r.Methods("GET").Path("/hello/{name}").Handler(apiChain.Then(AppHandler{h: app.GreetingWithName}))
 

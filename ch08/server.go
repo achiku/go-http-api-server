@@ -32,6 +32,13 @@ type AppHandler struct {
 }
 
 func (a AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	user := getUserFromContext(r.Context())
+	logger := xlog.FromRequest(r)
+	logger.SetField("user_id", user.ID)
+	logger.SetField("user_name", user.Name)
+	logger.SetField("app_version", r.Header.Get("App-Version"))
+	logger.SetField("x_forwarded_for", r.Header.Get("X-Forwarded-For"))
+
 	encoder := json.NewEncoder(w)
 	status, res, err := a.h(w, r)
 	if err != nil {
@@ -73,6 +80,7 @@ func (app *App) GreetingWithName(w http.ResponseWriter, r *http.Request) (int, i
 		}
 		return http.StatusInternalServerError, e, err
 	}
+
 	logger.Debugf("%s %s", res.Name, res.Message)
 	return http.StatusOK, res, nil
 }
@@ -121,6 +129,7 @@ func main() {
 		xlog.RefererHandler("referer"),
 		xlog.RequestIDHandler("req_id", "Request-Id"),
 		loggingMiddleware,
+		faceAuthMiddleware,
 	)
 	halfLogChain := chain.Append(
 		xlog.NewHandler(NewLogConfig(app.Config)),
